@@ -109,64 +109,91 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _checkForUpdates() async {
-    setState(() {
-      _isCheckingUpdate = true;
-    });
-
     try {
-      // Initialize the update listener
-      AzhonAppUpdate.listener((ResultModel model) {
-        debugPrint('Update status: $model');
-      });
+      debugPrint('Starting update check...');
+      final updateInfo = await VersionService.checkForUpdates();
 
-      // Create update model
-      final updateModel = UpdateModel(
-        "https://github.com/AK-4O4/nyoom_music/releases/latest/download/app-release.apk",
-        "nyoom_music.apk",
-        "ic_launcher",
-        "https://github.com/AK-4O4/nyoom_music/releases/latest",
-      );
+      debugPrint('Update check response: $updateInfo');
+
+      if (updateInfo == null) {
+        debugPrint('Update check failed - no response');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to check for updates')),
+        );
+        return;
+      }
+
+      if (!updateInfo['hasUpdate']) {
+        debugPrint(
+            'No update available - current version: ${updateInfo['currentVersion']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You are using the latest version')),
+        );
+        return;
+      }
+
+      debugPrint(
+          'Update available - latest version: ${updateInfo['latestVersion']}');
 
       // Show update dialog
+      if (!mounted) return;
       showDialog(
         context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Check for Updates'),
-            content: const Text('Would you like to check for updates?'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: const Text('Check'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  AzhonAppUpdate.update(updateModel);
-                },
-              ),
+        builder: (context) => AlertDialog(
+          title: const Text('Update Available'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Current version: ${updateInfo['currentVersion']}'),
+              Text('Latest version: ${updateInfo['latestVersion']}'),
+              const SizedBox(height: 16),
+              const Text('Release Notes:'),
+              const SizedBox(height: 8),
+              Text(updateInfo['releaseNotes']),
             ],
-          );
-        },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Later'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _startUpdate(updateInfo['downloadUrl']);
+              },
+              child: const Text('Update Now'),
+            ),
+          ],
+        ),
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error checking for updates: $e'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isCheckingUpdate = false;
-        });
-      }
+      print('Error checking for updates: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to check for updates')),
+      );
     }
+  }
+
+  void _startUpdate(String downloadUrl) {
+    final updateModel = UpdateModel(
+      downloadUrl,
+      'Nyoom.apk',
+      'ic_launcher',
+      'https://github.com/AK-4O4/Nyoom-Music/releases/latest',
+    );
+
+    final updateListener = AzhonAppUpdate.listener((ResultModel model) {
+      print('Update status: $model');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Update status: $model')),
+      );
+    });
+
+    AzhonAppUpdate.update(updateModel);
   }
 
   @override
