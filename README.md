@@ -73,21 +73,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License 📄
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments 🙏
 
 - Flutter team for the amazing framework
 - All contributors who have helped shape this project
 - The open-source community for their invaluable resources
-
-## Contact 📧
-
-Muhammad Abdullah - [@AK-4O4](https://github.com/AK-4O4)
-
-Project Link: [https://github.com/AK-4O4/nyoom_music](https://github.com/AK-4O4/nyoom_music)
 
 ---
 
